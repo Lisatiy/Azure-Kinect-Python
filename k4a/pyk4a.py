@@ -4,6 +4,7 @@ import sys
 
 try:
     _k4a = ctypes.CDLL(r'C:\Program Files\Azure Kinect SDK v1.3.0\sdk\windows-desktop\amd64\release\bin\k4a.dll')
+    _k4arecord = ctypes.CDLL(r'C:\Program Files\Azure Kinect SDK v1.3.0\sdk\windows-desktop\amd64\release\bin\k4arecord.dll')
 except Exception as e:
     try:
         _k4a = ctypes.CDLL('k4a.so')
@@ -17,6 +18,13 @@ class _handle_k4a_device_t(ctypes.Structure):
         ("_rsvd", ctypes.c_size_t),
     ]
 k4a_device_t = ctypes.POINTER(_handle_k4a_device_t)
+
+# K4A_DECLARE_HANDLE(k4a_playback_t);
+class _handle_k4a_playback_t(ctypes.Structure):
+     _fields_= [
+        ("_rsvd", ctypes.c_size_t),
+    ]
+k4a_playback_t = ctypes.POINTER(_handle_k4a_playback_t)
 
 # K4A_DECLARE_HANDLE(k4a_capture_t);
 class _handle_k4a_capture_t(ctypes.Structure):
@@ -38,6 +46,11 @@ class _handle_k4a_transformation_t(ctypes.Structure):
         ("_rsvd", ctypes.c_size_t),
     ]
 k4a_transformation_t = ctypes.POINTER(_handle_k4a_transformation_t)
+
+#class k4a_stream_result_t(CtypeIntEnum):
+K4A_STREAM_RESULT_SUCCEEDED = 0
+K4A_STREAM_RESULT_FAILED = 1
+K4A_STREAM_RESULT_EOF = 2
 
 #class k4a_result_t(CtypeIntEnum):
 K4A_RESULT_SUCCEEDED = 0
@@ -315,6 +328,25 @@ K4A_DEVICE_CONFIG_INIT_DISABLE_ALL.disable_streaming_indicator = False
 k4a_device_open = _k4a.k4a_device_open
 k4a_device_open.restype=ctypes.c_int
 k4a_device_open.argtypes=(ctypes.c_uint32, ctypes.POINTER(k4a_device_t))
+
+#K4A_EXPORT k4a_result_t k4a_playback_open(const char *path, k4a_playback_t *playback_handle);
+k4a_playback_open = _k4arecord.k4a_playback_open
+k4a_playback_open.restype=ctypes.c_int
+k4a_playback_open.argtypes=(ctypes.c_char_p, ctypes.POINTER(k4a_playback_t))
+
+#K4A_EXPORT k4a_result_t k4a_playback_close(k4a_playback_t *playback_handle);
+k4a_playback_close = _k4arecord.k4a_playback_close
+k4a_playback_close.argtypes=(k4a_playback_t,)
+
+#K4A_EXPORT k4a_result_t k4a_playback_get_calibration(k4a_playback_t playback_handle, k4a_calibration_t *calibration );
+k4a_playback_get_calibration = _k4arecord.k4a_playback_get_calibration
+k4a_playback_get_calibration.restype=ctypes.c_int
+k4a_playback_get_calibration.argtypes=(k4a_playback_t, ctypes.POINTER(k4a_calibration_t))
+
+#K4A_EXPORT k4a_result_t k4a_playback_get_next_capture(k4a_playback_t playback_handle, k4a_capture_t *capture_handle );
+k4a_playback_get_next_capture = _k4arecord.k4a_playback_get_next_capture
+k4a_playback_get_next_capture.restype=ctypes.c_int
+k4a_playback_get_next_capture.argtypes=(k4a_playback_t, ctypes.POINTER(k4a_capture_t))
 
 #K4A_EXPORT k4a_result_t k4a_device_start_cameras(k4a_device_t device_handle, const k4a_device_configuration_t *config);
 k4a_device_start_cameras = _k4a.k4a_device_start_cameras
