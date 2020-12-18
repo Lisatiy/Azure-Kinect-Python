@@ -75,71 +75,64 @@ if __name__ == "__main__":
         sensor_capture = k4a.k4a_capture_t()
         stream_result = k4a.k4a_playback_get_next_capture(playback_handle,ctypes.byref(sensor_capture))
         if stream_result == k4a.K4A_STREAM_RESULT_EOF:
+            print("Error! Get depth frame time out!")
             break
         if stream_result == k4a.K4A_STREAM_RESULT_SUCCEEDED:
             frame_count+=1
-    
-    print(frame_count)
+            print("Start processing frame {}".format(frame_count))
 
-    #    get_capture_result = k4a.k4a_device_get_capture(device, ctypes.byref(sensor_capture), k4a.K4A_WAIT_INFINITE)
-
-    #     if get_capture_result == k4a.K4A_WAIT_RESULT_SUCCEEDED:
-    #         frame_count += 1
-
-    #         print("Start processing frame {}".format(frame_count))
-
-    #         queue_capture_result = k4a.k4abt_tracker_enqueue_capture(tracker, sensor_capture, k4a.K4A_WAIT_INFINITE)
-
-    #         k4a.k4a_capture_release(sensor_capture)
-
-    #         if queue_capture_result == k4a.K4A_WAIT_RESULT_TIMEOUT:
-    #             # It should never hit timeout when K4A_WAIT_INFINITE is set.
-    #             print("Error! Add capture to tracker process queue timeout!")
-    #             break
-    #         elif queue_capture_result == k4a.K4A_WAIT_RESULT_FAILED:
-    #             print("Error! Add capture to tracker process queue failed!")
-    #             break
-
-    #         body_frame = k4a.k4abt_frame_t()
-    #         pop_frame_result = k4a.k4abt_tracker_pop_result(tracker, ctypes.byref(body_frame), k4a.K4A_WAIT_INFINITE)
-    #         if pop_frame_result == k4a.K4A_WAIT_RESULT_SUCCEEDED:
-    #             num_bodies = k4a.k4abt_frame_get_num_bodies(body_frame)
-    #             print("{} bodies are detected!".format(num_bodies))
-
-    #             for i in range(num_bodies):
-    #                 body = k4a.k4abt_body_t()
-    #                 VERIFY(k4a.k4abt_frame_get_body_skeleton(body_frame, i, ctypes.byref(body.skeleton)), "Get body from body frame failed!")
-    #                 body.id = k4a.k4abt_frame_get_body_id(body_frame, i)
-
-    #                 print_body_information(body)
+            depth = k4a.k4a_capture_get_depth_image(sensor_capture)
+            if depth is not None:
+                k4a.k4a_image_release(depth)
                 
-    #             body_index_map = k4a.k4abt_frame_get_body_index_map(body_frame)
-    #             if body_index_map:
-    #                 print_body_index_map_middle_line(body_index_map)
-    #                 k4a.k4a_image_release(body_index_map)
-    #             else:
-    #                 print("Error: Fail to generate bodyindex map!")
+                queue_capture_result = k4a.k4abt_tracker_enqueue_capture(tracker, sensor_capture, k4a.K4A_WAIT_INFINITE)
 
-    #             k4a.k4abt_frame_release(body_frame)
-    #         elif pop_frame_result == k4a.K4A_WAIT_RESULT_TIMEOUT:
-    #             # It should never hit timeout when K4A_WAIT_INFINITE is set.
-    #             print("Error! Pop body frame result timeout!")
-    #             break
-    #         else:
-    #             print("Pop body frame result failed!")
-    #             break
-    #     elif get_capture_result == k4a.K4A_WAIT_RESULT_TIMEOUT:
-    #         # It should never hit timeout when K4A_WAIT_INFINITE is set.
-    #         print("Error! Get depth frame time out!")
-    #         break
-    #     else:
-    #         print("Get depth capture returned error: {}".format(get_capture_result))
+                k4a.k4a_capture_release(sensor_capture)
 
-    # print("Finished body tracking processing!")
+                if queue_capture_result == k4a.K4A_WAIT_RESULT_TIMEOUT:
+                    # It should never hit timeout when K4A_WAIT_INFINITE is set.
+                    print("Error! Add capture to tracker process queue timeout!")
+                    break
+                elif queue_capture_result == k4a.K4A_WAIT_RESULT_FAILED:
+                    print("Error! Add capture to tracker process queue failed!")
+                    break
 
-    # k4a.k4abt_tracker_shutdown(tracker)
-    # k4a.k4abt_tracker_destroy(tracker)
-    # k4a.k4a_device_stop_cameras(device)
-    # k4a.k4a_device_close(device)
+                body_frame = k4a.k4abt_frame_t()
+                pop_frame_result = k4a.k4abt_tracker_pop_result(tracker, ctypes.byref(body_frame), k4a.K4A_WAIT_INFINITE)
+                if pop_frame_result == k4a.K4A_WAIT_RESULT_SUCCEEDED:
+                    num_bodies = k4a.k4abt_frame_get_num_bodies(body_frame)
+                    print("{} bodies are detected!".format(num_bodies))
+
+                    timestamp = k4a.k4abt_frame_get_device_timestamp_usec(body_frame)
+                    print("{} timestamp are detected!".format(timestamp))
+
+                    for i in range(num_bodies):
+                        body = k4a.k4abt_body_t()
+                        VERIFY(k4a.k4abt_frame_get_body_skeleton(body_frame, i, ctypes.byref(body.skeleton)), "Get body from body frame failed!")
+                        body.id = k4a.k4abt_frame_get_body_id(body_frame, i)
+
+                        print_body_information(body)
+                    
+                    body_index_map = k4a.k4abt_frame_get_body_index_map(body_frame)
+                    if body_index_map:
+                        print_body_index_map_middle_line(body_index_map)
+                        k4a.k4a_image_release(body_index_map)
+                    else:
+                        print("Error: Fail to generate bodyindex map!")
+
+                    k4a.k4abt_frame_release(body_frame)
+                elif pop_frame_result == k4a.K4A_WAIT_RESULT_TIMEOUT:
+                    # It should never hit timeout when K4A_WAIT_INFINITE is set.
+                    print("Error! Pop body frame result timeout!")
+                    break
+                else:
+                    print("Pop body frame result failed!")
+                    break
+            else:
+                print("Get depth capture returned error!")
+        else:
+            print("Get offline next capture returned error: {}".format(stream_result))
+
+    print("Finished body tracking processing!")
     k4a.k4a_playback_close(playback_handle)
                     

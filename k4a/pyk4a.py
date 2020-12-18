@@ -372,6 +372,12 @@ k4a_device_get_capture = _k4a.k4a_device_get_capture
 k4a_device_get_capture.restype=ctypes.c_int
 k4a_device_get_capture.argtypes=(k4a_device_t, ctypes.POINTER(k4a_capture_t), ctypes.c_int32)
 
+
+#K4A_EXPORT k4a_image_t k4a_capture_get_depth_image(k4a_capture_t capture_handle);
+k4a_capture_get_depth_image = _k4a.k4a_capture_get_depth_image
+k4a_capture_get_depth_image.restype=k4a_image_t
+k4a_capture_get_depth_image.argtypes=(k4a_capture_t,)
+
 #K4A_EXPORT void k4a_capture_release(k4a_capture_t capture_handle);
 k4a_capture_release = _k4a.k4a_capture_release
 k4a_capture_release.argtypes=(k4a_capture_t,)
