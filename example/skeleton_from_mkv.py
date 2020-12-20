@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     # open file
     playback_handle = k4a.k4a_playback_t()
-    mkv_path = 'G:/dataset/test/installing_1.mkv'
+    mkv_path = 'G:/dataset/installing_1.mkv'
     VERIFY(k4a.k4a_playback_open(ctypes.c_char_p(bytes(mkv_path, encoding='utf8')), ctypes.byref(playback_handle)), "Cannot open recording {}!".format(mkv_path))
 
     sensor_calibration = k4a.k4a_calibration_t()

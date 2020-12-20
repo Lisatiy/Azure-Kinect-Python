@@ -334,7 +334,7 @@ k4a_playback_open = _k4arecord.k4a_playback_open
 k4a_playback_open.restype=ctypes.c_int
 k4a_playback_open.argtypes=(ctypes.c_char_p, ctypes.POINTER(k4a_playback_t))
 
-#K4A_EXPORT k4a_result_t k4a_playback_close(k4a_playback_t *playback_handle);
+#K4A_EXPORT k4a_result_t k4a_playback_close(k4a_playback_t playback_handle);
 k4a_playback_close = _k4arecord.k4a_playback_close
 k4a_playback_close.argtypes=(k4a_playback_t,)
 
