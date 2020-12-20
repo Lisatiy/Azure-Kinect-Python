@@ -59,8 +59,8 @@ if __name__ == "__main__":
 
     # open file
     playback_handle = k4a.k4a_playback_t()
-    mkv_path = b'G:\dataset\installing_1.mkv'
-    VERIFY(k4a.k4a_playback_open(ctypes.c_char_p(mkv_path), ctypes.byref(playback_handle)), "Cannot open recording !")
+    mkv_path = 'G:/dataset/test/installing_1.mkv'
+    VERIFY(k4a.k4a_playback_open(ctypes.c_char_p(bytes(mkv_path, encoding='utf8')), ctypes.byref(playback_handle)), "Cannot open recording {}!".format(mkv_path))
 
     sensor_calibration = k4a.k4a_calibration_t()
     VERIFY(k4a.k4a_playback_get_calibration(playback_handle, ctypes.byref(sensor_calibration)), "Get depth camera calibration failed!")
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
 
     frame_count = 0
-    while frame_count < 300:
+    while frame_count < 3:
         sensor_capture = k4a.k4a_capture_t()
         stream_result = k4a.k4a_playback_get_next_capture(playback_handle,ctypes.byref(sensor_capture))
         if stream_result == k4a.K4A_STREAM_RESULT_EOF:
