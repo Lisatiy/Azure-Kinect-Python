@@ -17,9 +17,9 @@ num_joint = 25
 max_frame = 300
 
 # img in azure kinect
-img_w = 640
-img_h = 576
-frame_id = 60
+img_w = 1920
+img_h = 1080
+frame_id = 20
 
 file_json = 'G:/dataset/skeleton_rgbd_nn/skeleton_data/walking_1.json'
 file_mkv = 'G:/dataset/tmp/walking_1.mkv'
@@ -65,9 +65,9 @@ if __name__ == "__main__":
     col_in_cy = sensor_calibration.color_camera_calibration.intrinsics.parameters.param.cy
     col_in_fx = sensor_calibration.color_camera_calibration.intrinsics.parameters.param.fx
     col_in_fy = sensor_calibration.color_camera_calibration.intrinsics.parameters.param.fy
-    col_in_mat = np.mat([[col_in_fx, 0, col_in_cx, 0],
-                    [0, col_in_fy, col_in_cy, 0],
-                    [0, 0, 1, 0]])
+    col_in_mat = np.mat([[col_in_fx, 0, col_in_cx],
+                    [0, col_in_fy, col_in_cy],
+                    [0, 0, 1]])
 
     dep_ex_r = sensor_calibration.depth_camera_calibration.extrinsics.rotation
     dep_ex_t = sensor_calibration.depth_camera_calibration.extrinsics.translation
@@ -75,6 +75,10 @@ if __name__ == "__main__":
                     [dep_ex_r[3], dep_ex_r[4], dep_ex_r[5], dep_ex_t[1]],
                     [dep_ex_r[6], dep_ex_r[7], dep_ex_r[8], dep_ex_t[2]],
                     [0, 0, 0, 1]])
+    # dep_ex_mat = np.mat([[dep_ex_r[0], dep_ex_r[3], dep_ex_r[6], dep_ex_t[0]],
+    #                 [dep_ex_r[1], dep_ex_r[4], dep_ex_r[7], dep_ex_t[1]],
+    #                 [dep_ex_r[2], dep_ex_r[5], dep_ex_r[8], dep_ex_t[2]],
+    #                 [0, 0, 0, 1]])
     dep_ex_mat = np.concatenate(dep_ex_mat).astype(None)
     
     col_ex_r = sensor_calibration.color_camera_calibration.extrinsics.rotation
@@ -83,15 +87,14 @@ if __name__ == "__main__":
                     [col_ex_r[3], col_ex_r[4], col_ex_r[5], col_ex_t[1]],
                     [col_ex_r[6], col_ex_r[7], col_ex_r[8], col_ex_t[2]],
                     [0, 0, 0, 1]])
+    # col_ex_mat = np.mat([[col_ex_r[0], col_ex_r[3], col_ex_r[6], col_ex_t[0]],
+    #                 [col_ex_r[1], col_ex_r[4], col_ex_r[7], col_ex_t[1]],
+    #                 [col_ex_r[2], col_ex_r[5], col_ex_r[8], col_ex_t[2]],
+    #                 [0, 0, 0, 1]])
     col_ex_mat = np.concatenate(col_ex_mat).astype(None)
+    trans_mat = col_ex_mat * dep_ex_mat.I
     
-    # trans_mat = col_ex_mat * dep_ex_mat.I
-    
-
     k4a.k4a_playback_close(playback_handle)
-
-
-    # trans_para = col_in_mat * trans_mat * dep_in_mat.I
 
 
     with open(file_json, 'r') as f:
@@ -101,7 +104,6 @@ if __name__ == "__main__":
         frame = cv2.resize(frame, (img_w, img_h))
         frame = frame[:,:,(2,1,0)]
 
-        # gray = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
 
         video_info = json.load(f)
 
@@ -118,31 +120,22 @@ if __name__ == "__main__":
                 data_numpy[0, frame_index, :, 0] = new_pose[:, 0]
                 data_numpy[1, frame_index, :, 0] = new_pose[:, 1]
                 data_numpy[2, frame_index, :, 0] = new_pose[:, 2]
-        
-        # x_list = ((new_pose[:,0] - 0.5) * img_w + img_w / 2) / 2 + 200
-        # y_list = ((new_pose[:,1] - 0.5) * img_h + img_h / 2) / 2 + 200
-        # x_list = new_pose[:,0] / (float(img_w) / 640) + float(img_w) / 2
-        # y_list = new_pose[:,1] / (float(img_h) / 576) + float(img_h) / 2
 
-        pw = (dep_in_mat * new_pose.T).T
+
+        pw = new_pose.T
+        pw_p = np.zeros((pw.shape[0] + 1, pw.shape[1]))
+        pw_p[:pw.shape[0], :pw.shape[1]] = pw
+        pd = trans_mat * pw_p
+        pd_p = pd[:pd.shape[0]-1, :pd.shape[1]]
+        pc = (col_in_mat * pd_p).T
+        # import pdb; pdb.set_trace()
 
         for i in range(25):
-            pw[i, :] = pw[i, :] / pw[i, 2]
-        # import pdb; pdb.set_trace()
+            pc[i, :] = pc[i, :] / pc[i, 2]
+    
+        x_list = np.array(pc[:, 0])
+        y_list = np.array(pc[:, 1])
 
-        # xy_pose = (trans_para * new_pose.T).T
-
-        # for i in range(25):
-        #     xy_pose[i, :] = xy_pose[i, :] / xy_pose[i, 2]
-
-        # import pdb; pdb.set_trace()
-        x_list = np.array(pw[:, 0])
-        y_list = np.array(pw[:, 1])
-
-        # x_list = x_list + x_list[0]
-        # y_list = y_list + y_list[0]
-        # x_list = x_list * (img_w / 640) + img_w / 2
-        # y_list = y_list * (img_h / 576) + img_h / 2
         #创建图并命名
         plt.figure('Scatter fig')
         ax = plt.gca()
@@ -152,8 +145,6 @@ if __name__ == "__main__":
         ax.set_ylabel('y')
         ax.invert_yaxis()  #y轴反向
         
-
-
         #画散点图，以x_list中的值为横坐标，以y_list中的值为纵坐标
         #参数c指定点的颜色，s指定点的大小,alpha指定点的透明度
         ax.scatter(x_list, y_list, c='r', s=20, alpha=0.5)

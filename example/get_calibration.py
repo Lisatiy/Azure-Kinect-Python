@@ -64,7 +64,7 @@ if __name__ == "__main__":
     col_in_mat = np.mat([[col_in_fx, 0, col_in_cx],
                     [0, col_in_fy, col_in_cy],
                     [0, 0, 1]])
-
+    
     dep_ex_r = sensor_calibration.depth_camera_calibration.extrinsics.rotation
     dep_ex_t = sensor_calibration.depth_camera_calibration.extrinsics.translation
     dep_ex_mat = np.mat([[dep_ex_r[0], dep_ex_r[1], dep_ex_r[2], dep_ex_t[0]],
