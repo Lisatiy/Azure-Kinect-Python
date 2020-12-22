@@ -19,7 +19,7 @@ max_frame = 300
 # img in azure kinect
 img_w = 1920
 img_h = 1080
-frame_id = 20
+frame_id = 0
 
 file_json = 'G:/dataset/skeleton_rgbd_nn/skeleton_data/walking_1.json'
 file_mkv = 'G:/dataset/tmp/walking_1.mkv'
@@ -117,9 +117,9 @@ if __name__ == "__main__":
                 pose = np.array(frame_info["skeleton"]['pose']).reshape(32, 3)
                 new_pose = pose[azure_kinect_id_list]
 
-                data_numpy[0, frame_index, :, 0] = new_pose[:, 0]
-                data_numpy[1, frame_index, :, 0] = new_pose[:, 1]
-                data_numpy[2, frame_index, :, 0] = new_pose[:, 2]
+                data_numpy[0, frame_index - 1, :, 0] = new_pose[:, 0]
+                data_numpy[1, frame_index - 1, :, 0] = new_pose[:, 1]
+                data_numpy[2, frame_index - 1, :, 0] = new_pose[:, 2]
 
 
         pw = new_pose.T
