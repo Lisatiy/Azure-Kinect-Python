@@ -1,7 +1,7 @@
 
 """
 Extract skeleton data of body pose from videos captured by Azure Kinect
-With normalization
+The video length is up to 3 minutes
 """
 
 import traceback
@@ -25,8 +25,8 @@ img_h = 1080
 toolbar_width = 20
 
 # get video list
-video_root = 'G:/dataset/tmp_h/'
-output_root = 'G:/dataset/skeleton_rgbd_h/'
+video_root = 'G:/dataset/tmp1/'
+output_root = 'G:/dataset/skeleton_rgbd_test/'
 video_list = []
 label_index_map = {'walking':0, 'installing':1, 'waving':2, 'stopping':3, 'picking':4}
 js_label_dict = {}
@@ -119,14 +119,16 @@ if __name__ == "__main__":
 
 
         frame_count = 0
-        while frame_count < 300:
-            sensor_capture = k4a.k4a_capture_t()
+        sensor_capture = k4a.k4a_capture_t()
+        while frame_count < 5400:
+            frame_count+=1
             stream_result = k4a.k4a_playback_get_next_capture(playback_handle,ctypes.byref(sensor_capture))
             if stream_result == k4a.K4A_STREAM_RESULT_EOF:
+                print(frame_count)
                 print("Error! Get depth frame time out!")
-                break
+                # break
             if stream_result == k4a.K4A_STREAM_RESULT_SUCCEEDED:
-                frame_count+=1
+                
                 # print("Start processing frame {}".format(frame_count))
 
                 depth = k4a.k4a_capture_get_depth_image(sensor_capture)
@@ -139,58 +141,71 @@ if __name__ == "__main__":
 
                     if queue_capture_result == k4a.K4A_WAIT_RESULT_TIMEOUT:
                         # It should never hit timeout when K4A_WAIT_INFINITE is set.
+                        print(frame_count)
                         print("Error! Add capture to tracker process queue timeout!")
-                        break
+                        multi_pose = np.zeros((1, 32, 3))
+                        pose_list = [round(x, 3) for x in multi_pose[0, :, :].reshape(-1).tolist()]
+                        js_item = {'frame_index':frame_count, 'skeleton':{'pose':pose_list}}
+                        js_dict['data'].append(js_item)
+                        # break
                     elif queue_capture_result == k4a.K4A_WAIT_RESULT_FAILED:
+                        print(frame_count)
                         print("Error! Add capture to tracker process queue failed!")
-                        break
-
-                    body_frame = k4a.k4abt_frame_t()
-                    pop_frame_result = k4a.k4abt_tracker_pop_result(tracker, ctypes.byref(body_frame), k4a.K4A_WAIT_INFINITE)
-                    if pop_frame_result == k4a.K4A_WAIT_RESULT_SUCCEEDED:
-                        num_bodies = k4a.k4abt_frame_get_num_bodies(body_frame)
-                        # print("{} bodies are detected!".format(num_bodies))
-                        timestamp = k4a.k4abt_frame_get_device_timestamp_usec(body_frame)
-                        # print("{} timestamp are detected!".format(timestamp))
-                        if num_bodies:
-                            multi_pose = np.zeros((num_bodies, k4a.K4ABT_JOINT_COUNT, 3))
-                            for i in range(num_bodies):
-                                body = k4a.k4abt_body_t()
-                                VERIFY(k4a.k4abt_frame_get_body_skeleton(body_frame, i, ctypes.byref(body.skeleton)), "Get body from body frame failed!")
-                                body.id = k4a.k4abt_frame_get_body_id(body_frame, i)
-
-                                multi_pose[i, :, :] = body_information(body)
-
-                            # normalization
-                            center_pelvis = multi_pose[0,0,:]
-                            multi_pose[0, :, :] = multi_pose[0, :, :] - center_pelvis
-                            # print(np.shape(center_pelvis))
-                            multi_pose[:, :, 0] = multi_pose[:, :, 0] / img_w + 0.5
-                            multi_pose[:, :, 1] = multi_pose[:, :, 1] / img_h + 0.5
-                            multi_pose[:, :, 2] = multi_pose[:, :, 2] / img_h + 0.5
-                        else:
-                            multi_pose = np.zeros((1, k4a.K4ABT_JOINT_COUNT, 3))
-
-                        # import pdb; pdb.set_trace()
+                        
+                        multi_pose = np.zeros((1, 32, 3))
                         pose_list = [round(x, 3) for x in multi_pose[0, :, :].reshape(-1).tolist()]
                         js_item = {'frame_index':frame_count, 'skeleton':{'pose':pose_list}}
                         js_dict['data'].append(js_item)
                         
-                        # body_index_map = k4a.k4abt_frame_get_body_index_map(body_frame)
-                        # if body_index_map:
-                        #     print_body_index_map_middle_line(body_index_map)
-                        #     k4a.k4a_image_release(body_index_map)
-                        # else:
-                        #     print("Error: Fail to generate bodyindex map!")
-
-                        k4a.k4abt_frame_release(body_frame)
-                    elif pop_frame_result == k4a.K4A_WAIT_RESULT_TIMEOUT:
-                        # It should never hit timeout when K4A_WAIT_INFINITE is set.
-                        print("Error! Pop body frame result timeout!")
-                        break
+                        # break
                     else:
-                        print("Pop body frame result failed!")
-                        break
+
+                        body_frame = k4a.k4abt_frame_t()
+                        pop_frame_result = k4a.k4abt_tracker_pop_result(tracker, ctypes.byref(body_frame), k4a.K4A_WAIT_INFINITE)
+                        if pop_frame_result == k4a.K4A_WAIT_RESULT_SUCCEEDED:
+                            num_bodies = k4a.k4abt_frame_get_num_bodies(body_frame)
+                            # print("{} bodies are detected!".format(num_bodies))
+                            timestamp = k4a.k4abt_frame_get_device_timestamp_usec(body_frame)
+                            # print("{} timestamp are detected!".format(timestamp))
+                            if num_bodies:
+                                multi_pose = np.zeros((num_bodies, k4a.K4ABT_JOINT_COUNT, 3))
+                                for i in range(num_bodies):
+                                    body = k4a.k4abt_body_t()
+                                    VERIFY(k4a.k4abt_frame_get_body_skeleton(body_frame, i, ctypes.byref(body.skeleton)), "Get body from body frame failed!")
+                                    body.id = k4a.k4abt_frame_get_body_id(body_frame, i)
+
+                                    multi_pose[i, :, :] = body_information(body)
+
+                                # normalization
+                                center_pelvis = multi_pose[0,0,:]
+                                multi_pose[0, :, :] = multi_pose[0, :, :] - center_pelvis
+                                # print(np.shape(center_pelvis))
+                                multi_pose[:, :, 0] = multi_pose[:, :, 0] / img_w + 0.5
+                                multi_pose[:, :, 1] = multi_pose[:, :, 1] / img_h + 0.5
+                                multi_pose[:, :, 2] = multi_pose[:, :, 2] / img_h + 0.5
+                            else:
+                                multi_pose = np.zeros((1, k4a.K4ABT_JOINT_COUNT, 3))
+
+                            # import pdb; pdb.set_trace()
+                            pose_list = [round(x, 3) for x in multi_pose[0, :, :].reshape(-1).tolist()]
+                            js_item = {'frame_index':frame_count, 'skeleton':{'pose':pose_list}}
+                            js_dict['data'].append(js_item)
+                            
+                            # body_index_map = k4a.k4abt_frame_get_body_index_map(body_frame)
+                            # if body_index_map:
+                            #     print_body_index_map_middle_line(body_index_map)
+                            #     k4a.k4a_image_release(body_index_map)
+                            # else:
+                            #     print("Error: Fail to generate bodyindex map!")
+
+                            k4a.k4abt_frame_release(body_frame)
+                        elif pop_frame_result == k4a.K4A_WAIT_RESULT_TIMEOUT:
+                            # It should never hit timeout when K4A_WAIT_INFINITE is set.
+                            print("Error! Pop body frame result timeout!")
+                            break
+                        else:
+                            print("Pop body frame result failed!")
+                            break
                 else:
                     print("Get depth capture returned error!")
             else:

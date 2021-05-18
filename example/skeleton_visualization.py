@@ -1,3 +1,8 @@
+
+"""
+Visualize body pose with .mkv videos captured by Azure Kinect and skeleton data without normalization (nn)
+"""
+
 import json
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,8 +26,8 @@ img_w = 1920
 img_h = 1080
 frame_id = 0
 
-file_json = 'G:/dataset/skeleton_rgbd_nn/skeleton_data/walking_1.json'
-file_mkv = 'G:/dataset/tmp/walking_1.mkv'
+file_json = 'G:/dataset/skeleton_rgbd_h_nn/skeleton_data/picking_v0_p1_h1.json'
+file_mkv = 'G:/dataset/tmp_h/picking_v0_p1_h1.mkv'
 
 azure_kinect_id_list = np.array([1, 2, 4, 27, 6, 7, 8, 9, 13, 14, 15, 16, 
 19, 20, 21, 22, 23, 24, 25, 26, 3, 10, 11, 17, 18]) - 1
@@ -47,8 +52,7 @@ if __name__ == "__main__":
 
     # open file
     playback_handle = k4a.k4a_playback_t()
-    mkv_path = 'G:/dataset/installing_1.mkv'
-    VERIFY(k4a.k4a_playback_open(ctypes.c_char_p(bytes(mkv_path, encoding='utf8')), ctypes.byref(playback_handle)), "Cannot open recording {}!".format(mkv_path))
+    VERIFY(k4a.k4a_playback_open(ctypes.c_char_p(bytes(file_mkv, encoding='utf8')), ctypes.byref(playback_handle)), "Cannot open recording {}!".format(file_mkv))
 
     sensor_calibration = k4a.k4a_calibration_t()
     VERIFY(k4a.k4a_playback_get_calibration(playback_handle, ctypes.byref(sensor_calibration)), "Get depth camera calibration failed!")
@@ -95,7 +99,6 @@ if __name__ == "__main__":
     trans_mat = col_ex_mat * dep_ex_mat.I
     
     k4a.k4a_playback_close(playback_handle)
-
 
     with open(file_json, 'r') as f:
         

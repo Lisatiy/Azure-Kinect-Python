@@ -1,7 +1,7 @@
 
 """
 Extract skeleton data of body pose from videos captured by Azure Kinect
-With normalization
+No normalization (nn)
 """
 
 import traceback
@@ -26,7 +26,7 @@ toolbar_width = 20
 
 # get video list
 video_root = 'G:/dataset/tmp_h/'
-output_root = 'G:/dataset/skeleton_rgbd_h/'
+output_root = 'G:/dataset/skeleton_rgbd_h_nn/'
 video_list = []
 label_index_map = {'walking':0, 'installing':1, 'waving':2, 'stopping':3, 'picking':4}
 js_label_dict = {}
@@ -161,13 +161,13 @@ if __name__ == "__main__":
 
                                 multi_pose[i, :, :] = body_information(body)
 
-                            # normalization
-                            center_pelvis = multi_pose[0,0,:]
-                            multi_pose[0, :, :] = multi_pose[0, :, :] - center_pelvis
-                            # print(np.shape(center_pelvis))
-                            multi_pose[:, :, 0] = multi_pose[:, :, 0] / img_w + 0.5
-                            multi_pose[:, :, 1] = multi_pose[:, :, 1] / img_h + 0.5
-                            multi_pose[:, :, 2] = multi_pose[:, :, 2] / img_h + 0.5
+                            # # normalization
+                            # center_pelvis = multi_pose[0,0,:]
+                            # multi_pose[0, :, :] = multi_pose[0, :, :] - center_pelvis
+                            # # print(np.shape(center_pelvis))
+                            # multi_pose[:, :, 0] = multi_pose[:, :, 0] / img_w + 0.5
+                            # multi_pose[:, :, 1] = multi_pose[:, :, 1] / img_h + 0.5
+                            # multi_pose[:, :, 2] = multi_pose[:, :, 2] / img_h + 0.5
                         else:
                             multi_pose = np.zeros((1, k4a.K4ABT_JOINT_COUNT, 3))
 
